@@ -37,7 +37,7 @@ func snippetPath(t time.Time) (string, error) {
 	if t.IsZero() {
 		return "", fmt.Errorf("resolve snippet path: timestamp is zero")
 	}
-	t = t.UTC()
+	t = t.Local()
 	base, err := baseDir()
 	if err != nil {
 		return "", fmt.Errorf("resolve snippet path: %v", err)
