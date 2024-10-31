@@ -6,12 +6,11 @@ import (
 	"flag"
 	"fmt"
 	"io/fs"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"time"
-
-	"github.com/golang/glog"
 )
 
 const snippetTimeFormat = time.DateTime + " -0700"
@@ -59,7 +58,7 @@ func run() error {
 	}
 	defer func() {
 		if err := os.Remove(tmpFile.Name()); err != nil {
-			glog.Errorf("Deleting temporary file for editing snippet unexpectedly failed: %v", err)
+			log.Printf("Deleting temporary file for editing snippet unexpectedly failed: %v", err)
 		}
 	}()
 
@@ -121,7 +120,7 @@ func run() error {
 	}
 	defer func() {
 		if err := snippetFile.Close(); err != nil {
-			glog.Errorf("Closing snippet file failed unexpectedly: %v", err)
+			log.Printf("Closing snippet file failed unexpectedly: %v", err)
 		}
 	}()
 	if _, err := snippetFile.Write(snippet); err != nil {
@@ -133,6 +132,7 @@ func run() error {
 func main() {
 	flag.Parse()
 	if err := run(); err != nil {
-		glog.Exitf("Fatal error: %v", err)
+		log.Printf("Fatal error: %v", err)
+		os.Exit(1)
 	}
 }
