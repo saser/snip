@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"cmp"
+	"errors"
 	"flag"
 	"fmt"
 	"io/fs"
@@ -18,6 +19,7 @@ const snippetTimeFormat = time.DateTime + " -0700"
 var (
 	message = flag.String("m", "", "Title of the snippet. If this is empty then $EDITOR will open to write the snippet, ignoring the -edit flag.")
 	edit    = flag.Bool("edit", false, "Open $EDITOR to edit the snippet. Only has effect if -m is specified. If $EDITOR is empty then vim will be used; if vim is not present on the system, an error is returned.")
+	format  = flag.String("format", snippetTimeFormat, "Format of pre-filled timestamp in snippet. Please refer to https://pkg.go.dev/time to read about time formats.")
 )
 
 // baseDir returns the base directory for everything related to snip (snippets
@@ -50,6 +52,10 @@ func run() error {
 		openEditor = true
 	}
 
+	if *format == "" {
+		return errors.New("-format is required")
+	}
+
 	// Create a temporary file to hold the snippet before it's committed to the
 	// snipdir.
 	tmpFile, err := os.CreateTemp("", "")
@@ -66,7 +72,7 @@ func run() error {
 	// TODO: consider allowing the user to specify this themselves with a `-t
 	// 10:30` flag or similar.
 	now := time.Now().Local()
-	if _, err := tmpFile.WriteString(now.Format(snippetTimeFormat) + " | "); err != nil {
+	if _, err := tmpFile.WriteString(now.Format(*format) + " | "); err != nil {
 		return fmt.Errorf("write snippet timestamp to temporary file: %v", err)
 	}
 
