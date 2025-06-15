@@ -20,7 +20,7 @@ import (
 var (
 	message       = flag.String("m", "", "Title of the snippet. If this is empty then $EDITOR will open to write the snippet, ignoring the -edit flag.")
 	edit          = flag.Bool("edit", false, "Open $EDITOR to edit the snippet. Only has effect if -m is specified. If $EDITOR is empty then vim will be used; if vim is not present on the system, an error is returned.")
-	format        = flag.String("format", "15:04", "Format of pre-filled timestamp in snippet. Please refer to https://pkg.go.dev/time to read about time formats.")
+	timeFormat    = flag.String("time_format", "15:04", "Format of pre-filled timestamp in snippet. Please refer to https://pkg.go.dev/time to read about time formats.")
 	includeHeader = flag.Bool("include_header", true, "Include a header containing the current date and timezone as the first line in the snippet file.")
 )
 
@@ -97,7 +97,7 @@ func run() error {
 		openEditor = true
 	}
 
-	if *format == "" {
+	if *timeFormat == "" {
 		return errors.New("-format is required")
 	}
 
@@ -115,7 +115,7 @@ func run() error {
 
 	// Write the current timestamp as the first part of the snippet.
 	now := time.Now().Local()
-	if _, err := tmpFile.WriteString(now.Format(*format) + " | "); err != nil {
+	if _, err := tmpFile.WriteString(now.Format(*timeFormat) + " | "); err != nil {
 		return fmt.Errorf("write snippet timestamp to temporary file: %v", err)
 	}
 
