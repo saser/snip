@@ -15,7 +15,7 @@ $ tree ~/.snip
 ...
 ```
 
-## Purpose and example workflow
+## Purpose
 
 I use it primarily in my workday to record what I'm working on, because I have
 more concurrent workstreams than I can keep in my head. The snippets help me
@@ -53,13 +53,13 @@ $ snip -m 'back from lunch; heading into 1:1 with mgr'
 ```
 These notes are stored in `~/.snip/2024-11-20.txt` as:
 ```
-2024-11-20 09:30:47 +0000 | at desk; going to review Alice's MR
-2024-11-20 09:53:24 +0000 | reviewed the MR; now going to start working on the system design draft
-2024-11-20 10:50:43 +0000 | got sidetracked into a debugging session; continuing work on the draft
-2024-11-20 12:09:04 +0000 | heading for lunch
-2024-11-20 13:38:00 +0000 | back from lunch + coffee walk; heading into 1:1 with mgr
+--- Wednesday Nov 11 2024 in Europe/Dublin ---
+09:30 | at desk; going to review Alice's MR
+09:53 | reviewed the MR; now going to start working on the system design draft
+10:50 | got sidetracked into a debugging session; continuing work on the draft
+12:09 | heading for lunch
+13:38 | back from lunch + coffee walk; heading into 1:1 with mgr
 ```
-(The date/timestamps are just examples, of course.)
 
 Invoking `snip` without any arguments or flags will open an editor to write your
 note in a temporary file.
@@ -68,7 +68,7 @@ $ snip
 ```
 `snip` will prepopulate the file with the current timestamp:
 ```
-2024-11-20 16:30:56 +0000 | <write your note here>
+16:30 | <write your note here>
 ```
 `snip` will use `$EDITOR` if it's set; fall back to `vim` if it's not; and
 exit with an error if `vim` isn't in `$PATH`:
@@ -91,8 +91,22 @@ $ snip -m 'started working on the architecture document but' -edit
 `snip` will take whatever you have written in the `-m` flag so far and
 prepopulate it in the editor together with the current time:
 ```
-2024-11-20 16:30:56 +0000 | started working on the architecture document but
+16:30 | started working on the architecture document but
 ```
+
+## Customization
+
+The format of entries in the snippet file are influenced by a few things:
+*   The `-include_header` flag (default `true`), which determines whether the file
+    should have a header line like `--- Wednesday Nov 11 2024 in Europe/Dublin
+    ---` at the top. If this flag is set, and the file doesn't include a header,
+    it will be added.
+*   The `-time_format` flag (default `15:04`), which determines how the current
+    time will be formatted when written out to file (or prefilled, in the case
+    of `-m "..." -edit`). It uses Go's timestamp formatting conventions; see
+    https://pkg.go.dev/time#Layout for reference.
+*   If `-edit` is passed or `snip` is invoked without flags, whatever you write
+    in your editor will be what's written out to file.
 
 ## Flexibility
 
@@ -115,13 +129,13 @@ convention to add `#foo` for everything related to the `foo` project, and then
 `grep` for all such tags:
 ```
 $ grep '#foo' ~/.snip/*.txt
-/Users/saser/.snip/2024-11-15.txt:2024-11-15 14:49:49 +0000 | asked Alice about using Prometheus for metrics #foo
-/Users/saser/.snip/2024-11-15.txt:2024-11-15 15:57:48 +0000 | got some basic metrics exporting working in test dev!! yay #foo
-/Users/saser/.snip/2024-11-15.txt:2024-11-15 16:30:48 +0000 | started working on integrating Telegraf setup into Ansible playbooks; made some progress but still lots that needs fleshing out, e.g. getting secrets from Vault. headed to standup #foo
-/Users/saser/.snip/2024-11-18.txt:2024-11-18 11:16:04 +0000 | got roped into some AWS cost analysis, doesn't seem like our team is contributing to any big costs. Continuing with benchmarks #foo
-/Users/saser/.snip/2024-11-18.txt:2024-11-18 14:16:33 +0000 | still running benchmarks... realized I didn't try doing parallel requests #foo
-/Users/saser/.snip/2024-11-18.txt:2024-11-18 15:09:20 +0000 | not sure exactly where time has gone, but I have JIRA-123 for rolling out the new page sizes; still needs the deployment MR but I've sent it for review to Alice and Bob #foo
-/Users/saser/.snip/2024-11-20.txt:2024-11-20 12:09:04 +0000 | back from demo presentation, now heading straight to lunch #foo
+/Users/saser/.snip/2024-11-15.txt:14:49 | asked Alice about using Prometheus for metrics #foo
+/Users/saser/.snip/2024-11-15.txt:15:57 | got some basic metrics exporting working in test dev!! yay #foo
+/Users/saser/.snip/2024-11-15.txt:16:30 | started working on integrating Telegraf setup into Ansible playbooks; made some progress but still lots that needs fleshing out, e.g. getting secrets from Vault. headed to standup #foo
+/Users/saser/.snip/2024-11-18.txt:11:16 | got roped into some AWS cost analysis, doesn't seem like our team is contributing to any big costs. Continuing with benchmarks #foo
+/Users/saser/.snip/2024-11-18.txt:14:16 | still running benchmarks... realized I didn't try doing parallel requests #foo
+/Users/saser/.snip/2024-11-18.txt:15:09 | not sure exactly where time has gone, but I have JIRA-123 for rolling out the new page sizes; still needs the deployment MR but I've sent it for review to Alice and Bob #foo
+/Users/saser/.snip/2024-11-20.txt:12:09 | back from demo presentation, now heading straight to lunch #foo
 ```
 
 ## Aliases
@@ -130,8 +144,8 @@ In my personal setup I use some shell aliases to make it a bit easier and faster
 to record and view snippets. Below is a dump of my current aliases (on macOS):
 ```shell
 alias s='snip'
-alias sm='snip -m'
-alias sme='snip -edit -m'
+alias sm='s -m'
+alias sme='s -edit -m'
 alias st='cat ~/.snip/$(date -I).txt'   # "st" = "snip today"
 alias ste='vim ~/.snip/$(date -I).txt'  # "ste" = "snip today edit"
 ```
