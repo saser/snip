@@ -48,6 +48,49 @@ func snippetPath(t time.Time) (string, error) {
 	return filepath.Join(base, t.Format(time.DateOnly)+".txt"), nil
 }
 
+// inferLocalTimezone attempts to figure out the IANA name of the local timezone
+// (e.g. "Europe/Stockholm" or "America/Los_Angeles"). It's done on best effort
+// basis, since macOS doesn't provide any explicit way to query for it.
+//
+// This function uses the value of the TZ environment variable, if set, as long
+// as it is a valid location according to [time.LoadLocation].
+func inferLocalTimezone() (string, error) {
+	// Let the TZ environment variable take precedence, if it's set and resolves
+	// to a valid timezone using [time.LoadLocation].
+	if tz := os.Getenv("TZ"); tz != "" {
+		if _, err := time.LoadLocation(tz); err == nil { // if NO error
+			return tz, nil
+		}
+	}
+	// Best-effort: assume that /etc/localtime is a symlink to a file whose path
+	// contains the timezone name in a standardized format. On my macOS system,
+	// it looks like this:
+	//
+	//     $ readlink /etc/localtime
+	//     /var/db/timezone/zoneinfo/Europe/London
+	//
+	// To be a bit more liberal in the paths accepted, look for a "zoneinfo/"
+	// substring, and assume everything after it is the timezone name.
+	//
+	// As a sanity check, try loading the inferred timezone with
+	// [time.LoadLocation]. If that doesn't work, return an error.
+	const localtime = "/etc/localtime"
+	realPath, err := filepath.EvalSymlinks(localtime)
+	if err != nil {
+		return "", fmt.Errorf("infer local timezone: evaluate %s as a symlink: %w", localtime, err)
+	}
+	const marker = "zoneinfo/"
+	idx := strings.Index(realPath, marker)
+	if idx == -1 {
+		return "", fmt.Errorf("infer local timezone: infer from %s symlink: real path does not contain %q", localtime, marker)
+	}
+	inferred := realPath[idx+len(marker):]
+	if _, err := time.LoadLocation(inferred); err != nil {
+		return "", fmt.Errorf("infer local timezone: infer from %s symlink: inferred timezone %q cannot be loaded with time.LoadLocation: %w", localtime, inferred, err)
+	}
+	return inferred, nil
+}
+
 func run() error {
 	openEditor := *edit
 	if *message == "" {
@@ -187,49 +230,6 @@ func run() error {
 		return fmt.Errorf("write snippet out to file: %v", err)
 	}
 	return nil
-}
-
-// inferLocalTimezone attempts to figure out the IANA name of the local timezone
-// (e.g. "Europe/Stockholm" or "America/Los_Angeles"). It's done on best effort
-// basis, since macOS doesn't provide any explicit way to query for it.
-//
-// This function uses the value of the TZ environment variable, if set, as long
-// as it is a valid location according to [time.LoadLocation].
-func inferLocalTimezone() (string, error) {
-	// Let the TZ environment variable take precedence, if it's set and resolves
-	// to a valid timezone using [time.LoadLocation].
-	if tz := os.Getenv("TZ"); tz != "" {
-		if _, err := time.LoadLocation(tz); err == nil { // if NO error
-			return tz, nil
-		}
-	}
-	// Best-effort: assume that /etc/localtime is a symlink to a file whose path
-	// contains the timezone name in a standardized format. On my macOS system,
-	// it looks like this:
-	//
-	//     $ readlink /etc/localtime
-	//     /var/db/timezone/zoneinfo/Europe/London
-	//
-	// To be a bit more liberal in the paths accepted, look for a "zoneinfo/"
-	// substring, and assume everything after it is the timezone name.
-	//
-	// As a sanity check, try loading the inferred timezone with
-	// [time.LoadLocation]. If that doesn't work, return an error.
-	const localtime = "/etc/localtime"
-	realPath, err := filepath.EvalSymlinks(localtime)
-	if err != nil {
-		return "", fmt.Errorf("infer local timezone: evaluate %s as a symlink: %w", localtime, err)
-	}
-	const marker = "zoneinfo/"
-	idx := strings.Index(realPath, marker)
-	if idx == -1 {
-		return "", fmt.Errorf("infer local timezone: infer from %s symlink: real path does not contain %q", localtime, marker)
-	}
-	inferred := realPath[idx+len(marker):]
-	if _, err := time.LoadLocation(inferred); err != nil {
-		return "", fmt.Errorf("infer local timezone: infer from %s symlink: inferred timezone %q cannot be loaded with time.LoadLocation: %w", localtime, inferred, err)
-	}
-	return inferred, nil
 }
 
 func main() {
