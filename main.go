@@ -69,8 +69,6 @@ func run() error {
 	}()
 
 	// Write the current timestamp as the first part of the snippet.
-	// TODO: consider allowing the user to specify this themselves with a `-t
-	// 10:30` flag or similar.
 	now := time.Now().Local()
 	if _, err := tmpFile.WriteString(now.Format(*format) + " | "); err != nil {
 		return fmt.Errorf("write snippet timestamp to temporary file: %v", err)
