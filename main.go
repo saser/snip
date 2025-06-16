@@ -215,8 +215,11 @@ func run() error {
 	// Include the existing snippets, if any.
 	assembled.Write(existing)
 	// In case the existing snippets didn't contain a newline, write one out, so
-	// that the new snippet is guaranteed to be on a new line.
-	if existing[len(existing)-1] != '\n' {
+	// that the new snippet is guaranteed to be on a new line. Only do this if
+	// there are already any existing snippets -- there should be no _leading_
+	// newlines in case the existing snippets are empty (e.g. because this is
+	// the first snippet of the day).
+	if n := len(existing); n != 0 && existing[n-1] != '\n' {
 		assembled.WriteByte('\n')
 	}
 
