@@ -66,10 +66,6 @@ note in a temporary file.
 ```
 $ snip
 ```
-`snip` will prepopulate the file with the current timestamp:
-```
-16:30 | <write your note here>
-```
 `snip` will use `$EDITOR` if it's set; fall back to `vim` if it's not; and
 exit with an error if `vim` isn't in `$PATH`:
 
@@ -91,8 +87,16 @@ $ snip -m 'started working on the architecture document but' -edit
 `snip` will take whatever you have written in the `-m` flag so far and
 prepopulate it in the editor together with the current time:
 ```
-16:30 | started working on the architecture document but
+started working on the architecture document but
 ```
+
+By default, `snip` will prepend the current time to the snippet you write when
+writing out to the snippet file, in a format like:
+```
+15:04 | worked on the API draft
+```
+Use the `-include_time` flag to turn the behavior off (see "Customization"
+below).
 
 ## Customization
 
@@ -101,12 +105,11 @@ The format of entries in the snippet file are influenced by a few things:
     should have a header line like `--- Wednesday Nov 11 2024 in Europe/Dublin
     ---` at the top. If this flag is set, and the file doesn't include a header,
     it will be added.
-*   The `-time_format` flag (default `15:04`), which determines how the current
-    time will be formatted when written out to file (or prefilled, in the case
-    of `-m "..." -edit`). It uses Go's timestamp formatting conventions; see
-    https://pkg.go.dev/time#Layout for reference.
-*   If `-edit` is passed or `snip` is invoked without flags, whatever you write
-    in your editor will be what's written out to file.
+*   The `-include_time` flag (default `"15:04 |"`), which determines how the
+    current time will be formatted when the snippet is written to the file. It
+    will be prepended to the snippet text. The format uses Go's timestamp
+    formatting conventions; see https://pkg.go.dev/time#Layout for reference.
+    Set this to the empty string (`-include_time=""`) to turn timestamps off.
 
 ## Flexibility
 

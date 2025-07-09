@@ -20,7 +20,7 @@ import (
 var (
 	message       = flag.String("m", "", "Title of the snippet. If this is empty then $EDITOR will open to write the snippet, ignoring the -edit flag.")
 	edit          = flag.Bool("edit", false, "Open $EDITOR to edit the snippet. Only has effect if -m is specified. If $EDITOR is empty then vim will be used; if vim is not present on the system, an error is returned.")
-	timeFormat    = flag.String("time_format", "15:04", "Format of pre-filled timestamp in snippet. Please refer to https://pkg.go.dev/time to read about time formats.")
+	includeTime   = flag.String("include_time", "15:04 | ", "Format of pre-filled timestamp in snippet. Please refer to https://pkg.go.dev/time to read about time formats. Leave this empty to not include a timestamp.")
 	includeHeader = flag.Bool("include_header", true, "Include a header containing the current date and timezone as the first line in the snippet file.")
 )
 
@@ -97,10 +97,6 @@ func run() error {
 		openEditor = true
 	}
 
-	if *timeFormat == "" {
-		return errors.New("-format is required")
-	}
-
 	// Create a temporary file to hold the snippet before it's committed to the
 	// snipdir.
 	tmpFile, err := os.CreateTemp("", "")
@@ -113,12 +109,6 @@ func run() error {
 		}
 	}()
 
-	// Write the current timestamp as the first part of the snippet.
-	now := time.Now().Local()
-	if _, err := tmpFile.WriteString(now.Format(*timeFormat) + " | "); err != nil {
-		return fmt.Errorf("write snippet timestamp to temporary file: %v", err)
-	}
-
 	// If there is a snippet title prefilled, write it to the temporary file.
 	if m := *message; m != "" {
 		if _, err := tmpFile.WriteString(m); err != nil {
@@ -126,6 +116,8 @@ func run() error {
 		}
 	}
 
+	// Optionally have the user edit the snippet in their editor before reading
+	// it back.
 	if openEditor {
 		editor := cmp.Or(os.Getenv("EDITOR"), "vim")
 		cmd := exec.Command(editor, tmpFile.Name())
@@ -152,6 +144,12 @@ func run() error {
 	// Add a trailing newline.
 	snippet = append(snippet, '\n')
 	// TODO: add future processing, such as validation, here.
+
+	// Optionally write the current timestamp as the first part of the snippet.
+	now := time.Now().Local()
+	if layout := *includeTime; layout != "" {
+		snippet = append([]byte(now.Format(layout)), snippet...)
+	}
 
 	// Assemble the final snippet file and write it out to disk, creating any
 	// directories required. To prevent 0-byte or half-written snippet files,
